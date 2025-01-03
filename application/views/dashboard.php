@@ -76,8 +76,9 @@
                 <h4><b>Total Sales</b></h4>
               </div>
               <div class="icon">
-                <i class="fa fa-dollar"></i>
+                  <span>&#8369;</span> <!-- Peso sign using HTML entity -->
               </div>
+
               <a href="<?php echo base_url('Controller_Orders/') ?>" class="small-box-footer">More Info <i class="fa fa-arrow-circle-right"></i></a>
             </div>
           </div>
