@@ -34,9 +34,10 @@
     .login-box {
         position: relative;
         z-index: 1;
-        margin-top: -1px;
-        margin-left: 430px;
         width: 430px;
+        margin: 0 auto; /* This centers the box horizontally */
+        top: 50%;      /* Move down by 50% of viewport height */
+        transform: translateY(-50%); /* Move up by 50% of element height */
     }
 
     .login-box-body {
