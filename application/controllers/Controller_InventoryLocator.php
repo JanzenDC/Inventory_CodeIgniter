@@ -33,52 +33,39 @@ class Controller_InventoryLocator extends Admin_Controller
 
     public function fetchProductDataNew()
     {
-        $result = array('data' => array());
         $data = $this->model_products->getProductData();
+        $result = ['data' => []];
     
         foreach ($data as $key => $value) {
             $store_data = $this->model_stores->getStoresData($value['store_id']);
-            
-            // Create image URL and HTML
-            $img_url = $store_data['image'] ? 
-                base_url('assets/images/warehouse/' . $store_data['image']) : 
-                '';
-                
+            $img_url = $store_data['image'] ? base_url('assets/images/warehouse/' . $store_data['image']) : '';
             $img_html = $store_data['image'] ? 
-            '<img src="' . $img_url . '" alt="Warehouse Image" class="img-circle" width="50" height="50" />
-            <p style="display: none;">' . $img_url . '</p>' : 
-            'No image';
-            
+                "<img src=\"$img_url\" alt=\"Warehouse Image\" class=\"img-circle\" width=\"50\" height=\"50\" />
+                <p style=\"display: none;\">$img_url</p>" : 
+                'No image';
     
-            // Availability
-            $availability = ($value['availability'] == 1) ? 
-                '<span class="label label-success">Active</span>' : 
-                '<span class="label label-warning">Inactive</span>';
+            $availability = $value['availability'] == 1 
+                ? '<span class="label label-success">Active</span>' 
+                : '<span class="label label-warning">Inactive</span>';
     
-            // Quantity status
-            $qty_status = '';
-            if ($value['qty'] <= 10) {
-                $qty_status = '<span class="label label-warning">Low</span>';
-            } else if ($value['qty'] <= 0) {
-                $qty_status = '<span class="label label-danger">Out of Stock!</span>';
-            }
+            $qty_status = $value['qty'] <= 0 ? 
+                '<span class="label label-danger">Out of Stock!</span>' : 
+                ($value['qty'] <= 10 ? '<span class="label label-warning">Low</span>' : '');
     
-            $result['data'][$key] = array(
+            $result['data'][$key] = [
                 $value['name'],
                 '₱' . $value['price'],
                 $value['qty'] . ' ' . $qty_status,
                 $store_data['name'],
-                array(
-                    'display' => $img_html,
-                    'export' => $img_url
-                ),
+                ['display' => $img_html, 'export' => $img_url],
                 $store_data['location'] ?? 'No location available',
                 $availability
-            );
+            ];
         }
     
         echo json_encode($result);
     }
+    
     
     /*
     * It Fetches the products data from the product table 
