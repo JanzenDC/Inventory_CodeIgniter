@@ -2,7 +2,7 @@
 
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-class Controller_Products extends Admin_Controller 
+class Controller_InventoryLocator extends Admin_Controller 
 {
 	public function __construct()
 	{
@@ -28,26 +28,33 @@ class Controller_Products extends Admin_Controller
             redirect('dashboard', 'refresh');
         }
 
-		$this->render_template('products/index', $this->data);	
+		$this->render_template('inventorylocator/index', $this->data);	
 	}
 
     public function fetchProductDataNew()
     {
         $result = array('data' => array());
-
         $data = $this->model_products->getProductData();
-
+    
         foreach ($data as $key => $value) {
-
             $store_data = $this->model_stores->getStoresData($value['store_id']);
             
-            // Warehouse image and location
-            $img = $store_data['image'] ? '<img src="' . base_url('assets/images/warehouse/' . $store_data['image']) . '" alt="Warehouse Image" class="img-circle" width="50" height="50" />' : 'No image';
-            $location = $store_data['location'] ? $store_data['location'] : 'No location available';
-
-            // Availability of product
-            $availability = ($value['availability'] == 1) ? '<span class="label label-success">Active</span>' : '<span class="label label-warning">Inactive</span>';
-
+            // Create image URL and HTML
+            $img_url = $store_data['image'] ? 
+                base_url('assets/images/warehouse/' . $store_data['image']) : 
+                '';
+                
+            $img_html = $store_data['image'] ? 
+            '<img src="' . $img_url . '" alt="Warehouse Image" class="img-circle" width="50" height="50" />
+            <p style="display: none;">' . $img_url . '</p>' : 
+            'No image';
+            
+    
+            // Availability
+            $availability = ($value['availability'] == 1) ? 
+                '<span class="label label-success">Active</span>' : 
+                '<span class="label label-warning">Inactive</span>';
+    
             // Quantity status
             $qty_status = '';
             if ($value['qty'] <= 10) {
@@ -55,21 +62,23 @@ class Controller_Products extends Admin_Controller
             } else if ($value['qty'] <= 0) {
                 $qty_status = '<span class="label label-danger">Out of Stock!</span>';
             }
-
+    
             $result['data'][$key] = array(
-                $value['name'],  // Product name
-                '₱' . $value['price'],  // Price
-                $value['qty'] . ' ' . $qty_status,  // Quantity and status
-                $store_data['name'],  // Warehouse name
-                $img,  // Warehouse image
-                $location,  // Warehouse location
-                $availability  // Availability of product
+                $value['name'],
+                '₱' . $value['price'],
+                $value['qty'] . ' ' . $qty_status,
+                $store_data['name'],
+                array(
+                    'display' => $img_html,
+                    'export' => $img_url
+                ),
+                $store_data['location'] ?? 'No location available',
+                $availability
             );
         }
-
+    
         echo json_encode($result);
     }
-
     
     /*
     * It Fetches the products data from the product table 
@@ -87,7 +96,7 @@ class Controller_Products extends Admin_Controller
 			// button
             $buttons = '';
             if(in_array('updateProduct', $this->permission)) {
-    			$buttons .= '<a href="'.base_url('Controller_Products/update/'.$value['id']).'" class="btn btn-warning btn-sm"><i class="fa fa-pencil"></i></a>';
+    			$buttons .= '<a href="'.base_url('Controller_InventoryLocator/update/'.$value['id']).'" class="btn btn-warning btn-sm"><i class="fa fa-pencil"></i></a>';
             }
 
             if(in_array('deleteProduct', $this->permission)) { 
@@ -164,11 +173,11 @@ class Controller_Products extends Admin_Controller
         	$create = $this->model_products->create($data);
         	if($create == true) {
         		$this->session->set_flashdata('success', 'Successfully created');
-        		redirect('Controller_Products/', 'refresh');
+        		redirect('Controller_InventoryLocator/', 'refresh');
         	}
         	else {
         		$this->session->set_flashdata('errors', 'Error occurred!!');
-        		redirect('Controller_Products/create', 'refresh');
+        		redirect('Controller_InventoryLocator/create', 'refresh');
         	}
         }
         else {
@@ -276,11 +285,11 @@ class Controller_Products extends Admin_Controller
             $update = $this->model_products->update($data, $product_id);
             if($update == true) {
                 $this->session->set_flashdata('success', 'Successfully updated');
-                redirect('Controller_Products/', 'refresh');
+                redirect('Controller_InventoryLocator/', 'refresh');
             }
             else {
                 $this->session->set_flashdata('errors', 'Error occurred!!');
-                redirect('Controller_Products/update/'.$product_id, 'refresh');
+                redirect('Controller_InventoryLocator/update/'.$product_id, 'refresh');
             }
         }
         else {

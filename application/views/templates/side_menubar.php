@@ -29,6 +29,13 @@
             </li>
           <?php endif; ?>
 
+          <li id="itemLocator">
+            <a href="<?php echo base_url('Controller_InventoryLocator/') ?>">
+              <i class="fa fa-institution"></i> <span>Inventory Locator</span>
+            </a>
+          </li>
+
+
           <?php if(in_array('createStore', $user_permission) || in_array('updateStore', $user_permission) || in_array('viewStore', $user_permission) || in_array('deleteStore', $user_permission)): ?>
             <li id="storeNav">
               <a href="<?php echo base_url('Controller_Warehouse/') ?>">

@@ -47,15 +47,17 @@
           <div class="box-body">
             <table id="manageTable" class="table table-bordered table-hover table-striped">
               <thead>
-              <tr>
-                <th>Warehouse</th>
-                <th>Status</th>
-                <?php if(in_array('updateStore', $user_permission) || in_array('deleteStore', $user_permission)): ?>
-                  <th>Action</th>
-                <?php endif; ?>
-              </tr>
+                <tr>
+                  
+                  <th>Warehouse</th>
+                  <th>Image</th>
+                  <th>Location</th>
+                  <th>Status</th>
+                  <?php if(in_array('updateStore', $user_permission) || in_array('deleteStore', $user_permission)): ?>
+                    <th>Action</th>
+                  <?php endif; ?>
+                </tr>
               </thead>
-
             </table>
           </div>
           <!-- /.box-body -->
@@ -82,13 +84,21 @@
         <h4 class="modal-title">Add Warehouse</h4>
       </div>
 
-      <form role="form" action="<?php echo base_url('Controller_Warehouse/create') ?>" method="post" id="createForm">
+      <form role="form" action="<?php echo base_url('Controller_Warehouse/create') ?>" method="post" id="createForm" enctype="multipart/form-data">
 
         <div class="modal-body">
 
           <div class="form-group">
             <label for="brand_name">Warehouse Name</label>
             <input type="text" class="form-control" id="store_name" name="store_name" placeholder="Enter warehouse name" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label for="warehouse_image">Upload Warehouse Image</label>
+            <input type="file" class="form-control" id="warehouse_image" name="warehouse_image" accept="image/*">
+          </div>
+          <div class="form-group">
+            <label for="location">Location</label>
+            <input type="text" class="form-control" id="location" name="location" placeholder="Enter location" autocomplete="off">
           </div>
           <div class="form-group">
             <label for="active">Status</label>
@@ -105,11 +115,9 @@
         </div>
 
       </form>
-
-
-    </div><!-- /.modal-content -->
-  </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
+    </div>
+  </div>
+</div>
 <?php endif; ?>
 
 <?php if(in_array('updateStore', $user_permission)): ?>
@@ -122,14 +130,22 @@
         <h4 class="modal-title">Edit Warehouse</h4>
       </div>
 
-      <form role="form" action="<?php echo base_url('Controller_Warehouse/update') ?>" method="post" id="updateForm">
+      <form role="form" action="<?php echo base_url('Controller_Warehouse/update') ?>" method="post" id="updateForm" enctype="multipart/form-data">
 
         <div class="modal-body">
           <div id="messages"></div>
 
           <div class="form-group">
-            <label for="edit_brand_name">Warehouse Name</label>
+            <label for="edit_store_name">Warehouse Name</label>
             <input type="text" class="form-control" id="edit_store_name" name="edit_store_name" placeholder="Enter warehouse name" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label for="edit_warehouse_image">Upload Warehouse Image</label>
+            <input type="file" class="form-control" id="edit_warehouse_image" name="edit_warehouse_image" accept="image/*">
+          </div>
+          <div class="form-group">
+            <label for="edit_location">Location</label>
+            <input type="text" class="form-control" id="edit_location" name="edit_location" placeholder="Enter location" autocomplete="off">
           </div>
           <div class="form-group">
             <label for="edit_active">Status</label>
@@ -146,11 +162,9 @@
         </div>
 
       </form>
-
-
-    </div><!-- /.modal-content -->
-  </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
+    </div>
+  </div>
+</div>
 <?php endif; ?>
 
 <?php if(in_array('deleteStore', $user_permission)): ?>
@@ -183,150 +197,173 @@
 
 <script type="text/javascript">
 var manageTable;
-
+var base_url = "<?php echo base_url(); ?>";
 $(document).ready(function() {
 
   $("#storeNav").addClass('active');
 
   // initialize the datatable 
   manageTable = $('#manageTable').DataTable({
-    dom: 'Bfrtip',
-        buttons: [
-            'copy', 'csv', 'excel', 'print'
-        ], 
-    'ajax': 'fetchStoresData',
-    'order': []
+      dom: 'Bfrtip',
+      buttons: [
+          'copy', 'csv', 'excel', 'print'
+      ], 
+      'ajax': 'fetchStoresData',
+      'columns': [
+          { data: '0' }, // Image
+          { data: '1' }, // Name
+          { data: '2' }, // Location
+          { data: '3' }, // Status
+          { data: '4' }  // Action buttons
+      ],
+      'order': []
   });
-
   // submit the create from 
-  $("#createForm").unbind('submit').on('submit', function() {
-    var form = $(this);
+  $("#createForm").unbind('submit').on('submit', function(event) {
+  event.preventDefault();
 
-    // remove the text-danger
-    $(".text-danger").remove();
+  // Check if a file has been selected
+  var fileInput = $('#warehouse_image')[0];
+  if (!fileInput.files.length) {
+    alert('Please select an image to upload');
+    return;
+  }
 
-    $.ajax({
-      url: form.attr('action'),
-      type: form.attr('method'),
-      data: form.serialize(), // /converting the form data into array and sending it to server
-      dataType: 'json',
-      success:function(response) {
+  // Create FormData object to handle file upload along with other form data
+  var form = $(this);
+  var formData = new FormData(form[0]); // Create FormData with the form elements
 
-        manageTable.ajax.reload(null, false); 
+  // Remove any existing error messages
+  $(".text-danger").remove();
 
-        if(response.success === true) {
-          $("#messages").html('<div class="alert alert-success alert-dismissible" role="alert">'+
-            '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>'+
-            '<strong> <span class="glyphicon glyphicon-ok-sign"></span> </strong>'+response.messages+
-          '</div>');
+  // Send the form data with the image
+  $.ajax({
+    url: form.attr('action'),
+    type: 'POST',
+    data: formData,
+    dataType: 'json',
+    processData: false, // Don't process the data
+    contentType: false, // Don't set content type as it is handled by FormData
+    success: function(response) {
+      manageTable.ajax.reload(null, false); 
 
+      if (response.success === true) {
+        $("#messages").html('<div class="alert alert-success alert-dismissible" role="alert">' +
+          '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>' +
+          '<strong><span class="glyphicon glyphicon-ok-sign"></span> </strong>' + response.messages + 
+        '</div>');
 
-          // hide the modal
-          $("#addModal").modal('hide');
+        // Reset the form
+        $("#createForm")[0].reset();
+        $("#createForm .form-group").removeClass('has-error').removeClass('has-success');
 
-          // reset the form
-          $("#createForm")[0].reset();
-          $("#createForm .form-group").removeClass('has-error').removeClass('has-success');
-
-        } else {
-
-          if(response.messages instanceof Object) {
-            $.each(response.messages, function(index, value) {
-              var id = $("#"+index);
-
-              id.closest('.form-group')
+      } else {
+        if (response.messages instanceof Object) {
+          $.each(response.messages, function(index, value) {
+            var id = $("#" + index);
+            id.closest('.form-group')
               .removeClass('has-error')
               .removeClass('has-success')
               .addClass(value.length > 0 ? 'has-error' : 'has-success');
-              
-              id.after(value);
-
-            });
-          } else {
-            $("#messages").html('<div class="alert alert-warning alert-dismissible" role="alert">'+
-              '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>'+
-              '<strong> <span class="glyphicon glyphicon-exclamation-sign"></span> </strong>'+response.messages+
+            id.after(value);
+          });
+        } else {
+          $("#messages").html('<div class="alert alert-warning alert-dismissible" role="alert">' +
+              '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>' +
+              '<strong><span class="glyphicon glyphicon-exclamation-sign"></span> </strong>' + response.messages + 
             '</div>');
           }
         }
+      },
+      error: function() {
+        alert('Error uploading the image');
       }
-    }); 
-
-    return false;
+    });
   });
+
 
 });
 
+
 // edit function
-function editFunc(id)
-{ 
+function editFunc(id) {
+
   $.ajax({
-    url: 'fetchStoresDataById/'+id,
-    type: 'post',
-    dataType: 'json',
-    success:function(response) {
+        url: 'fetchStoresDataById/' + id,
+        type: 'POST',
+        dataType: 'json',
+        success: function(response) {
+            $("#edit_store_name").val(response.name);
+            $("#edit_location").val(response.location);
+            $("#edit_active").val(response.active);
 
-      $("#edit_store_name").val(response.name);
-      $("#edit_active").val(response.active);
+            $('#editModal .modal-body').find('img').remove();
 
-      // submit the edit from 
-      $("#updateForm").unbind('submit').bind('submit', function() {
-        var form = $(this);
-
-        // remove the text-danger
-        $(".text-danger").remove();
-
-        $.ajax({
-          url: form.attr('action') + '/' + id,
-          type: form.attr('method'),
-          data: form.serialize(), // /converting the form data into array and sending it to server
-          dataType: 'json',
-          success:function(response) {
-
-            manageTable.ajax.reload(null, false); 
-
-            if(response.success === true) {
-              $("#messages").html('<div class="alert alert-success alert-dismissible" role="alert">'+
-                '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>'+
-                '<strong> <span class="glyphicon glyphicon-ok-sign"></span> </strong>'+response.messages+
-              '</div>');
+            setTimeout(function() {
+                if (response.image) {
+                    var imageUrl = base_url + 'assets/images/warehouse/' + response.image;
+                    $('#editModal .modal-body').prepend('<div class="form-group"><img src="' + imageUrl + '" alt="Warehouse Image" class="img-fluid" style="max-width: 100%;"></div>');
+                } else {
+                    $('#editModal .modal-body').prepend('<div class="form-group"><p>No image available for this warehouse.</p></div>');
+                }
+            }, 500);
 
 
-              // hide the modal
-              $("#editModal").modal('hide');
-              // reset the form 
-              $("#updateForm .form-group").removeClass('has-error').removeClass('has-success');
 
-            } else {
 
-              if(response.messages instanceof Object) {
-                $.each(response.messages, function(index, value) {
-                  var id = $("#"+index);
+            $("#updateForm").unbind('submit').on('submit', function(event) {
+                event.preventDefault();
 
-                  id.closest('.form-group')
-                  .removeClass('has-error')
-                  .removeClass('has-success')
-                  .addClass(value.length > 0 ? 'has-error' : 'has-success');
-                  
-                  id.after(value);
+                var form = $(this);
+                var formData = new FormData(form[0]);
 
+                $(".text-danger").remove();
+
+                $.ajax({
+                    url: form.attr('action') + '/' + id,
+                    type: 'POST',
+                    data: formData,
+                    dataType: 'json',
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        if (response.success === true) {
+                            $("#messages").html('<div class="alert alert-success alert-dismissible" role="alert">' +
+                                '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>' +
+                                '<strong><span class="glyphicon glyphicon-ok-sign"></span> </strong>' + response.messages +
+                                '</div>');
+
+                            $("#editModal").modal('hide');
+
+                            $("#updateForm")[0].reset();
+                            $("#updateForm .form-group").removeClass('has-error').removeClass('has-success');
+
+                            manageTable.ajax.reload(null, false);
+
+                        } else {
+                            if (response.messages instanceof Object) {
+                                $.each(response.messages, function(index, value) {
+                                    var id = $("#" + index);
+                                    id.closest('.form-group')
+                                        .removeClass('has-error')
+                                        .removeClass('has-success')
+                                        .addClass(value.length > 0 ? 'has-error' : 'has-success');
+                                    id.after(value);
+                                });
+                            } else {
+                                $("#messages").html('<div class="alert alert-warning alert-dismissible" role="alert">' +
+                                    '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>' +
+                                    '<strong><span class="glyphicon glyphicon-exclamation-sign"></span> </strong>' + response.messages +
+                                    '</div>');
+                            }
+                        }
+                    }
                 });
-              } else {
-                $("#messages").html('<div class="alert alert-warning alert-dismissible" role="alert">'+
-                  '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>'+
-                  '<strong> <span class="glyphicon glyphicon-exclamation-sign"></span> </strong>'+response.messages+
-                '</div>');
-              }
-            }
-          }
-        }); 
-
-        return false;
-      });
-
-    }
-  });
+            });
+        }
+    });
 }
+
 
 // remove functions 
 function removeFunc(id)
